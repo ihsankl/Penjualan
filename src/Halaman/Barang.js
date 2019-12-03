@@ -3,7 +3,7 @@ import { Container, Jumbotron, Button, Nav, Navbar, Form, FormControl, Col, Row,
 import axios from 'axios';
 import DataTable from 'react-data-table-component';
 
-const url = 'http://127.0.0.1:3001'
+const url = 'https://penjualan-api.herokuapp.com'
 const reqBarangGet = axios.get(`${url}/barang`)
 
 class Barang extends Component {
