@@ -1,53 +1,42 @@
 import React, { Component } from 'react';
-import { Container, Button, Form, Col, Row, Modal, Card, } from 'react-bootstrap';
+import { Container, Button, Form, Col, Row, Modal, Card, Table, } from 'react-bootstrap';
 import DataTable from 'react-data-table-component';
 import moment from 'moment';
+import axios from 'axios';
+// MATERIAL UI
+import TableUI from '@material-ui/core/Table';
+import TableBody from '@material-ui/core/TableBody';
+import TableCell from '@material-ui/core/TableCell';
+import TableHead from '@material-ui/core/TableHead';
+import TableRow from '@material-ui/core/TableRow';
+import Paper from '@material-ui/core/Paper';
+
+const url = 'http://127.0.0.1:3001'
 
 
 class Kasir extends Component {
-    constructor() {
-        super()
+    constructor(props) {
+        super(props);
     }
 
     state = {
         show: false,
+        cekHarga: 0,
         statStok: 0,
         statHargaJual: 0,
         statKodeBarang: '',
+        statIdBarang: '',
         statNamaBarang: '',
         statBayar: 0,
+        statTanggal: moment().format('YYYY-MM-DD'),
         // MISAHIN DOANG
         qtyJual: 0,
         subTotal: 0,
         diskon: 0,
         // MISAHIN DOANG (BAGIAN RIBET DI SINI)
         orders: [],
-        // DATA DARI DATABASE. YG INI PURA2 AJA
-        data: [{
-            kode_barang: '718051794',
-            nama_barang: 'Pepsodin',
-            harga_jual: 2000,
-            harga_pokok: 1000,
-            stok: 5,
-            harga_akhir: 0,
-            opsi: 'Hapus',
-        },
-        {
-            kode_barang: 'B0002',
-            nama_barang: 'Autisna',
-            harga_jual: 3000,
-            harga_pokok: 2000,
-            stok: 4,
-            harga_akhir: 0
-        },
-        {
-            kode_barang: 'B0003',
-            nama_barang: 'Obege',
-            harga_jual: 5000,
-            harga_pokok: 4000,
-            stok: 1,
-            harga_akhir: 0
-        },],
+        // DATA DARI HARUSNYA DARI DATABASE. YG INI PURA2 AJA
+        data: [],
         columns: [
             {
                 name: 'Kode Barang',
@@ -77,9 +66,9 @@ class Kasir extends Component {
             {
                 name: 'Opsi',
                 selector: 'opsi',
-                sortable: true,
+                cell: () => <Button variant={'warning'} onClick={() => this.onRemoveItem()}>Hapus</Button>
             },
-        ]
+        ],
     }
 
     onAddOrder = () => {
@@ -87,7 +76,7 @@ class Kasir extends Component {
         const jumlah_jual = this.state.qtyJual
         let hasil = harga_jual * jumlah_jual
 
-        const obj = { 'kode_barang': this.state.statKodeBarang, 'nama_barang': this.state.statNamaBarang, 'harga_jual': this.state.statHargaJual, 'qty_jual': this.state.qtyJual, 'harga_akhir': hasil, 'opsi': <Button variant={'warning'} onClick={this.onRemoveItem}>Hapus</Button>, }
+        const obj = { 'id_barang': this.state.statIdBarang, 'kode_barang': this.state.statKodeBarang, 'nama_barang': this.state.statNamaBarang, 'harga_jual': this.state.statHargaJual, 'qty_jual': this.state.qtyJual, 'harga_akhir': hasil, 'tgl_jual': this.state.statTanggal }
 
         this.setState({
             orders: [...this.state.orders, obj]
@@ -103,6 +92,7 @@ class Kasir extends Component {
     }
 
     onShow = () => {
+        this.getDataApiByNama()
         this.setState({ show: true })
     }
 
@@ -114,6 +104,12 @@ class Kasir extends Component {
             statNamaBarang: '',
             statBayar: 0,
             qtyJual: 0
+        })
+    }
+
+    removeOrders = () => {
+        this.setState({
+            orders: []
         })
     }
 
@@ -133,44 +129,91 @@ class Kasir extends Component {
         }
     }
 
-    getDataApiByKode = () => {
+    getDataApiByKode = async () => {
         const kode = this.state.statKodeBarang
-        const find = this.state.data.find(item => item.kode_barang === kode)
-        if (!kode || !find) {
-            alert('Data tidak ditemukan')
+        // const find = this.state.data.find(item => item.kode_barang === kode)
+        // if (!kode || !find) {
+        //     alert('Data tidak ditemukan')
+        //     this.removeStates()
+        // } else {
+        //     Object.keys(find).forEach(key => {
+        //         this.setState({
+        //             statStok: find.stok,
+        //             statHargaJual: find.harga_jual,
+        //             statNamaBarang: find.nama_barang,
+        //             statKodeBarang: find.kode_barang,
+        //         })
+        //     });
+        //     return find
+        // }
+
+        try {
+            const result = await (axios.get(`${url}/kodebarang/${kode}`))
+            const newData = result.data
+            this.setState({
+                data: newData
+            })
+            this.alihkan()
+        } catch (error) {
+            alert(error)
             this.removeStates()
-        } else {
-            Object.keys(find).forEach(key => {
-                this.setState({
-                    statStok: find.stok,
-                    statHargaJual: find.harga_jual,
-                    statNamaBarang: find.nama_barang,
-                    statKodeBarang: find.kode_barang,
-                })
-            });
-            console.log('im alive')
-            return find
         }
     }
 
-    getDataApiByNama = () => {
+    getDataApiByNama = async () => {
         const kode = this.state.statNamaBarang
-        const find = this.state.data.find(item => item.nama_barang === kode)
+        // const find = this.state.data.find(item => item.nama_barang === kode)
 
-        if (!kode || !find) {
-            alert('Data tidak ditemukan')
-            this.removeStates()
+        // if (!kode || !find) {
+        //     alert('Data tidak ditemukan')
+        //     this.removeStates()
+        // } else {
+        //     Object.keys(find).forEach(key => {
+        //         this.setState({
+        //             statStok: find.stok,
+        //             statHargaJual: find.harga_jual,
+        //             statNamaBarang: find.nama_barang,
+        //             statKodeBarang: find.kode_barang,
+        //         })
+        //     });
+
+        //     return find
+        // }
+
+        try {
+            const result = await (axios.get(`${url}/namabarang/${kode}`))
+            const newData = result.data
+            this.setState({
+                data: newData
+            })
+
+        } catch (error) {
+            console.log('data kosong')
+        }
+    }
+
+    alihkan = (index) => {
+
+        if (index) {
+            let stok = (this.state.data[index].stok_barang === null) ? 0 : this.state.data[0].stok_barang
+            this.setState({
+                show: false,
+                statStok: stok,
+                statIdBarang: this.state.data[index].id_barang,
+                statNamaBarang: this.state.data[index].nama_barang,
+                statHargaJual: this.state.data[index].harga_jual,
+                statKodeBarang: this.state.data[index].kode_barang,
+            })
         } else {
-            Object.keys(find).forEach(key => {
-                this.setState({
-                    statStok: find.stok,
-                    statHargaJual: find.harga_jual,
-                    statNamaBarang: find.nama_barang,
-                    statKodeBarang: find.kode_barang,
-                })
-            });
-
-            return find
+            let stok = (this.state.data[0].stok_barang === null) ? 0 : this.state.data[0].stok_barang
+            this.setState({
+                show: false,
+                statStok: stok,
+                statIdBarang: this.state.data[0].id_barang,
+                statNamaBarang: this.state.data[0].nama_barang,
+                statHargaJual: this.state.data[0].harga_jual,
+                statKodeBarang: this.state.data[0].kode_barang,
+            })
         }
     }
 
@@ -197,15 +240,72 @@ class Kasir extends Component {
         }
     }
 
+    isBarangExist = () => {
+        if (this.state.statHargaJual === 0) {
+            return <Form.Check
+                disabled
+                onChange={() => this.changeHarga()}
+                style={{ paddingTop: 7, marginLeft: 35 }}
+                type="switch"
+                id="custom-switch"
+                label="Distributor?"
+            />
+        } else {
+            return <Form.Check
+                onChange={() => this.changeHarga()}
+                style={{ paddingTop: 7, marginLeft: 35 }}
+                type="switch"
+                id="custom-switch"
+                label="Distributor?"
+            />
+        }
+    }
+
+    buttonTambah = () => {
+        if (this.state.statStok != 0) {
+            return <Button onClick={this.onAddOrder} block="true" variant="primary">Tambahkan</Button>
+        } else {
+            return <Button disabled block="true" variant="primary">Tambahkan</Button>
+        }
+    }
+
+    inputPenjualan = async (index) => {
+
+        try {
+            await axios.all([axios.post(`${url}/penjualan`), (axios.put(`${url}/ubahbarang`))], {
+                id_barangPenjualan: this.state.orders[index].id_barang,
+                qty_beliPenjualan: this.state.orders[index].qty_jual,
+                totalPenjualan: this.state.orders[index].harga_akhir,
+                tgl_jualPenjualan: this.state.orders[index].tgl_jual,
+                stok_barang: this.state.orders[index].qty_jual
+            })
+        } catch (error) {
+            console.log(error)
+            alert(`kesalahan ketika input data ke: ${index + 1}`)
+        }
+
+        // console.log(this.state.orders[index].harga_akhir)
+    }
+
+    pisahData = () => {
+        this.state.orders.map((index) => (
+            this.inputPenjualan(index)
+        ))
+        alert('Proses input selesai')
+        this.removeStates()
+        this.removeOrders()
+    }
+
     // UNTUK REFERENSI SIAPA TAU BUTUH
     // keyPressed2 = (event) => {
     //     if (event.key === "Enter") {
-    //         // this.getDataApiByNama()
+    // this.getDataApiByNama()
     //         this.onShow()
     //     }
     // }
 
     render() {
+
         return (
             <Container>
                 <h2>Transaksi Kasir</h2>
@@ -278,16 +378,10 @@ class Kasir extends Component {
                                     <Button onClick={this.onShow} block="true" variant="primary">Cari</Button>
                                 </Col>
                                 <Col style={{ marginBottom: 5 }} xs={6} md={3}>
-                                    <Form.Check
-                                        onChange={() => this.changeHarga()}
-                                        style={{ paddingTop: 7, marginLeft: 35 }}
-                                        type="switch"
-                                        id="custom-switch"
-                                        label="Distributor?"
-                                    />
+                                    {this.isBarangExist()}
                                 </Col>
                                 <Col style={{ marginBottom: 5 }} xs={6} md={3}>
-                                    <Button onClick={this.onAddOrder} block="true" variant="primary">Tambahkan</Button>
+                                    {this.buttonTambah()}
                                 </Col>
                                 <Col style={{ marginBottom: 5 }} xs={6} md={3}>
                                     <Button onClick={this.removeStates} block="true" variant="warning">Batal</Button>
@@ -299,38 +393,40 @@ class Kasir extends Component {
                         <Col sm>
                             <Card>
                                 <Card.Body>
-                                    {/* <h4>Barang yang di jual</h4>
-                                    <Table responsive striped bordered hover>
-                                        <thead>
-                                            <tr>
-                                                <th>Kode Barang</th>
-                                                <th>Nama Barang</th>
-                                                <th>Harga Satuan</th>
-                                                <th>Jumlah Jual</th>
-                                                <th>Harga Akhir</th>
-                                                <th>Opsi</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {this.state.orders.map((item, i) =>
-                                                <tr key={i}>
-                                                    <td>Kode Barang</td>
-                                                    <td>Nama Barang</td>
-                                                    <td>Harga Satuan</td>
-                                                    <td>Jumlah Jual</td>
-                                                    <td>{item}</td>
-                                                    <td>Opsi</td>
-                                                </tr>
-                                            )}
-                                        </tbody>
-                                    </Table> */}
-
-                                    <DataTable
+                                    {/* <DataTable
                                         title="Barang yang di jual"
                                         columns={this.state.columns}
                                         data={this.state.orders}
                                         pagination
-                                    />
+                                    /> */}
+                                    <Paper >
+                                        <Table aria-label="simple table">
+                                            <TableHead>
+                                                <TableRow>
+                                                    <TableCell>No.</TableCell>
+                                                    <TableCell align="right">Kode Barang</TableCell>
+                                                    <TableCell align="right">Nama Barang</TableCell>
+                                                    <TableCell align="right">Harga Satuan</TableCell>
+                                                    <TableCell align="right">QTY Jual</TableCell>
+                                                    <TableCell align="right">Harga Akhir</TableCell>
+                                                    <TableCell align="right">Harga Akhir</TableCell>
+                                                </TableRow>
+                                            </TableHead>
+                                            <TableBody>
+                                                {this.state.orders.map(row => (
+                                                    <TableRow key={row.name}>
+                                                        <TableCell component="th" scope="row">
+                                                            {row.name}
+                                                        </TableCell>
+                                                        <TableCell align="right">{row.nama_barang}</TableCell>
+                                                        <TableCell align="right">{row.nama_barang}</TableCell>
+                                                        <TableCell align="right">{row.nama_barang}</TableCell>
+                                                        <TableCell align="right">{row.nama_barang}</TableCell>
+                                                    </TableRow>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
+                                    </Paper>
                                 </Card.Body>
                             </Card>
                         </Col>
@@ -362,7 +458,7 @@ class Kasir extends Component {
                                     <Form.Group as={Row}>
                                         <Form.Label column="true" xs={12} md={5}>Bayar</Form.Label>
                                         <Col column="true" xs={12} md={7}>
-                                            <Form.Control value={this.state.statBayar} onChange={(event) => this.setState({ statBayar: event.target.value })} type="text" placeholder="Bayar" />
+                                            <Form.Control value={this.state.statBayar} onChange={(event) => this.setState({ statBayar: event.target.value })} type="number" placeholder="Bayar" />
                                         </Col>
                                     </Form.Group>
                                     <Form.Group as={Row}>
@@ -375,23 +471,49 @@ class Kasir extends Component {
                             </Row>
                         </Col>
                         <Col md={3}>
-                            <Button block="true" variant="primary">Simpan</Button>
-                            <Button block="true" variant="warning">Batal</Button>
+                            <Button onClick={() => this.pisahData()} block="true" variant="primary">Simpan</Button>
+                            <Button onClick={() => this.removeOrders()} block="true" variant="warning">Batal</Button>
                         </Col>
                     </Row>
                 </Form>
                 <Modal size="lg" aria-labelledby="contained-modal-title-vcenter" show={this.state.show} onHide={this.onHide}>
                     <Modal.Header closeButton>
-                        <Modal.Title>Modal heading</Modal.Title>
+                        <Modal.Title>Pencarian barang: {this.state.statNamaBarang}</Modal.Title>
                     </Modal.Header>
-                    <Modal.Body>Woohoo, you're reading this text in a modal!</Modal.Body>
+                    <Modal.Body>
+                        <Table responsive striped bordered hover>
+                            <thead>
+                                <tr>
+                                    <th>No.</th>
+                                    <th>Nama Barang</th>
+                                    <th>Kode Barang</th>
+                                    <th>Kategori</th>
+                                    <th>Harga Jual</th>
+                                    <th>Stok Barang</th>
+                                    <th>Opsi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {this.state.data.map((item, index) => (
+                                    <tr key={index}>
+                                        <td>{`${index + 1}.`}</td>
+                                        <td>{item.nama_barang}</td>
+                                        <td>{item.kode_barang}</td>
+                                        <td>{item.kategori}</td>
+                                        <td>{item.harga_jual}</td>
+                                        <td>{item.stok_barang}</td>
+                                        <td style={{ width: 50 }}>
+                                            <Button onClick={() => this.alihkan(index)} variant='warning' >Pilih</Button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </Table>
+                    </Modal.Body>
                     <Modal.Footer>
                         <Button variant="secondary" onClick={this.onHide}>
-                            Close
-          </Button>
-                        <Button variant="primary" onClick={this.onHide}>
-                            Save Changes
-          </Button>
+                            Keluar
+                        </Button>
                     </Modal.Footer>
                 </Modal>
             </Container >

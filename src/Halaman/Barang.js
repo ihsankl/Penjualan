@@ -3,8 +3,7 @@ import { Container, Jumbotron, Button, Nav, Navbar, Form, FormControl, Col, Row,
 import axios from 'axios';
 import DataTable from 'react-data-table-component';
 
-const url = 'https://penjualan-api.herokuapp.com'
-const reqBarangGet = axios.get(`${url}/barang`)
+const url = 'http://127.0.0.1:3001'
 
 class Barang extends Component {
 
@@ -87,9 +86,10 @@ class Barang extends Component {
 
     getDataFromApi = async () => {
         try {
-            const result = await (reqBarangGet)
+            const result = await (axios.get(`${url}/barang`))
+            const newData = result.data
             this.setState({
-                dataBarang: result.data,
+                dataBarang: newData,
                 loading: false
             })
 
@@ -121,6 +121,7 @@ class Barang extends Component {
 
     editDataApi = async () => {
         const { id_barang, kategori, kode_barang, nama_barang, harga_pokok, harga_jual } = this.state
+        
         if (this.state.kategori === '' || this.state.kode_barang === '' || this.state.nama_barang === '' || this.state.harga_jual === 0 || this.state.harga_pokok === 0) {
             alert('harap di isi')
         } else {
@@ -142,7 +143,7 @@ class Barang extends Component {
     }
 
     deleteDataApi = async (id_barang, stok_barang) => {
-        if (stok_barang) {
+        if (stok_barang || stok_barang != 0) {
             alert('Hapus data Stok terlebih dahulu!')
         } else {
             try {
@@ -204,11 +205,11 @@ class Barang extends Component {
                                     data={this.state.dataBarang}
                                     pagination
                                 /> */}
-                                { !this.state.loading && <DataTable 
+                                {!this.state.loading && <DataTable
                                     columns={this.state.columns}
                                     data={this.state.dataBarang}
                                     pagination
-                                /> }
+                                />}
                                 {/* <Table striped bordered hover>
                                     <thead>
                                         <tr>
