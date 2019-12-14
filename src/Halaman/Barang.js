@@ -52,13 +52,13 @@ class Barang extends Component {
                 },
                 {
                     name: 'Sisa Stok',
-                    selector: `stok_barang`,
+                    selector: `sisa_stok`,
                     sortable: true,
                 },
                 {
                     name: 'Opsi',
                     button: true,
-                    cell: row => <div><button onClick={() => this.deleteDataApi(row.id_barang, row.stok_barang)} style={{ border: '2px solid red', color: 'red', padding: '5px 15px', textAlign: 'center', textDecoration: 'none', display: 'inline-block' }} >Hapus</button> <br></br> <button onClick={() => this.showModalEdit(row.id_barang, row.kode_barang, row.nama_barang, row.kategori, row.harga_pokok, row.harga_jual)} style={{ width: '100%', marginTop: '5px', border: '2px solid blue', color: 'blue', padding: '5px 15px', textAlign: 'center', textDecoration: 'none', display: 'inline-block' }} >Edit</button></div>
+                    cell: row => <div><button onClick={() => this.deleteDataApi(row.id_barang, row.sisa_stok)} style={{ border: '2px solid red', color: 'red', padding: '5px 15px', textAlign: 'center', textDecoration: 'none', display: 'inline-block' }} >Hapus</button> <br></br> <button onClick={() => this.showModalEdit(row.id_barang, row.kode_barang, row.nama_barang, row.kategori, row.harga_pokok, row.harga_jual)} style={{ width: '100%', marginTop: '5px', border: '2px solid blue', color: 'blue', padding: '5px 15px', textAlign: 'center', textDecoration: 'none', display: 'inline-block' }} >Edit</button></div>
                 },
             ]
         }
@@ -134,7 +134,7 @@ class Barang extends Component {
                     harga_pokok: harga_pokok
                 })
                 alert('berhasil')
-                this.setState({ showModalTambah: false })
+                this.setState({ showModalEdit: false })
                 this.getDataFromApi()
             } catch (error) {
                 alert(error)
@@ -143,8 +143,8 @@ class Barang extends Component {
     }
 
     deleteDataApi = async (id_barang, stok_barang) => {
-        if (stok_barang || stok_barang != 0) {
-            alert('Hapus data Stok terlebih dahulu!')
+        if (stok_barang != 0) {
+            alert('hapus data stok terlebih dahulu!')
         } else {
             try {
                 await axios.delete(`${url}/barang/${id_barang}`)

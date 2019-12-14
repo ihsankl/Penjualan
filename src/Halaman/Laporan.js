@@ -1,23 +1,23 @@
 import React, { Component } from 'react';
-import { Container, Jumbotron, Button, Nav, Navbar, Form, FormControl, Col, Row, Table, Card, Modal } from 'react-bootstrap';
+import { Container, InputGroup, Jumbotron, Button, Nav, Navbar, Form, FormControl, Col, Row, Table, Card, Modal } from 'react-bootstrap';
 import DataTable from 'react-data-table-component';
 import moment from 'moment';
+import axios from 'axios'
+import NumberFormat from 'react-number-format';
+
+const url = 'http://127.0.0.1:3001'
 
 class Laporan extends Component {
 
     state = {
-        showModalTambah: false,
+        showModalEdit: false,
         stateLaporan: '',
         columns: [
             {
-                name: 'No.',
-                selector: 'nomor',
+                name: 'Tanggal Terjual',
+                selector: 'tgl_penjualan',
                 sortable: true,
-            },
-            {
-                name: 'Kode Barang',
-                selector: 'kode_barang',
-                sortable: true,
+                format: d => moment(d.tgl_penjualan).format('ll')
             },
             {
                 name: 'Nama Barang',
@@ -26,77 +26,29 @@ class Laporan extends Component {
             },
             {
                 name: 'QTY Jual',
-                selector: 'qty_jual',
+                selector: 'qty_beli',
                 sortable: true,
+                cell: (row) => `${row.qty_beli}`
             },
             {
-                name: 'Sisa Stok',
-                selector: 'sisa_stok',
+                name: 'Total Jual',
+                selector: 'total_pembelian',
                 sortable: true,
-            },
-            {
-                name: 'Harga Jual',
-                selector: 'harga_jual',
-                sortable: true,
-            },
-            {
-                name: 'Harga Pokok',
-                selector: 'harga_pokok',
-                sortable: true,
+                cell: (row) => `Rp. ${row.total_pembelian}`
             },
             {
                 name: 'Opsi',
                 selector: 'opsi',
                 sortable: true,
+                cell: (row) => <Button onClick={() => this.showModalEdit(row.id_penjualan, row.id_barang)}>Hapus | Edit</Button>
             }],
-        dataHarian: [{
-            kode_barang: '718051794',
-            nama_barang: 'Pepsodin',
-            harga_jual: 2000,
-            harga_pokok: 1000,
-            stok: 5,
-            harga_akhir: 0
-        },
-        {
-            kode_barang: 'B0002',
-            nama_barang: 'Autisna',
-            harga_jual: 3000,
-            harga_pokok: 2000,
-            stok: 4,
-            harga_akhir: 0
-        },
-        {
-            kode_barang: 'B0003',
-            nama_barang: 'Obege',
-            harga_jual: 5000,
-            harga_pokok: 4000,
-            stok: 1,
-            harga_akhir: 0
-        },],
-        dataBulanan: [{
-            kode_barang: 'asdasd',
-            nama_barang: 'Pepsoasdasdin',
-            harga_jual: 2000,
-            harga_pokok: 1000,
-            stok: 5,
-            harga_akhir: 0
-        },
-        {
-            kode_barang: 'B00asdasd02',
-            nama_barang: 'Autasdasdisna',
-            harga_jual: 3000,
-            harga_pokok: 2000,
-            stok: 4,
-            harga_akhir: 0
-        },
-        {
-            kode_barang: 'B0adasdasd003',
-            nama_barang: 'Obasdasdasege',
-            harga_jual: 5000,
-            harga_pokok: 4000,
-            stok: 1,
-            harga_akhir: 0
-        },]
+        dataHarian: [],
+        dataEdit: [],
+        dataBarang: [],
+        totalHarian: 0,
+        id_penjualan: '',
+        id_barang: '',
+        tgl_penjualan: moment().format('YYYY-MM-DD')
     }
 
     constructor(props) {
@@ -104,21 +56,96 @@ class Laporan extends Component {
     }
 
     componentDidMount() {
-        this.nav('harian')
+        this.getDataFromApi(this.state.tgl_penjualan)
+        this.getBarang()
     }
 
-    showModalTambah = () => {
-        this.setState({ showModalTambah: true })
+    getDataFromApi = async (tanggal) => {
+        try {
+            const result = await (axios.get(`${url}/penjualan/${tanggal}`))
+            const newData = result.data
+            this.setState({
+                dataHarian: newData
+            })
+            this.nav('harian')
+            this.getTotalHarian(this.state.tgl_penjualan)
+        } catch (error) {
+            alert(error)
+        }
+    }
+
+    getTotalHarian = async (tanggal) => {
+        try {
+            const result = await (axios.get(`${url}/total_harian/${tanggal}`))
+            const newData = result.data[0]
+            this.setState({
+                totalHarian: newData
+            })
+            console.log(this.state.totalHarian.hasil)
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    getDataById = async (id_penjualan) => {
+        try {
+            const result = await (axios.get(`${url}/editpenjualan/${id_penjualan}`))
+            const newData = result.data
+            this.setState({
+                dataEdit: newData
+            })
+            console.log(this.state.dataEdit)
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    getBarang = async () => {
+        try {
+            const result = await (axios.get(`${url}/barang/`))
+            const newData = result.data
+            this.setState({
+                dataBarang: newData
+            })
+            console.log()
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    hapusDataApi = async (id_penjualan) => {
+        // alert(id_penjualan)
+        try {
+            const result = await (axios.delete(`${url}/penjualan/${id_penjualan}`))
+            alert('Data Berhasil dihapus')
+            this.getDataFromApi(this.state.tgl_penjualan)
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    showModalEdit = (id_penjualan, id_barang) => {
+        this.setState({
+            showModalEdit: true,
+            id_penjualan: id_penjualan,
+            id_barang: id_barang,
+        })
     }
 
     hideModal = () => {
-        this.setState({ showModalTambah: false })
+        this.setState({ showModalEdit: false })
     }
 
     buildTittle = (key) => {
         if (key === 'harian') {
             return <span>
-                Laporan Harian <span>Tanggal: {moment().format('DD-MMMM-YYYY')}</span>
+                Laporan Harian <span>Tanggal: {this.state.tgl_penjualan}</span><span style={{ float: 'right' }}>
+                    <Form.Group>
+                        <InputGroup>
+                            <Form.Control value={this.state.tgl_penjualan} onChange={(event) => this.setState({ tgl_penjualan: event.target.value })} type="date" placeholder="Tanggal Penjualan" />
+                            <Button onClick={() => this.getDataFromApi(this.state.tgl_penjualan)}>Cari</Button>
+                        </InputGroup>
+                    </Form.Group></span>
             </span>
         } else {
             return <span>
@@ -181,39 +208,43 @@ class Laporan extends Component {
                     </Card.Header>
                     {this.state.stateLaporan}
                 </Card>
-                <Modal show={this.state.showModalTambah} onHide={this.hideModal}>
+                <h2 style={{ marginTop: 5 }}>Total Penjualan Tanggal {this.state.tgl_penjualan} :
+        <span style={{ float: 'right' }}><NumberFormat value={this.state.totalHarian.hasil} displayType={'text'} thousandSeparator={true} prefix={'Rp. '} /></span>
+                </h2>
+                <Modal show={this.state.showModalEdit} onHide={this.hideModal}>
                     <Modal.Header closeButton>
-                        <Modal.Title>Tambah Data</Modal.Title>
+                        <Modal.Title>Edit Data</Modal.Title>
                     </Modal.Header>
                     <Modal.Body>
                         <Form>
-                            <Form.Group>
-                                <Form.Label>Kode Barang</Form.Label>
-                                <Form.Control type="text" placeholder="Kode Barang" />
+                            <Form.Group >
+                                <Form.Label>Tanggal Jual</Form.Label>
+                                <Form.Control type="number" placeholder="Harga Jual" />
                             </Form.Group>
                             <Form.Group >
                                 <Form.Label>Nama Barang</Form.Label>
-                                <Form.Control type="text" placeholder="Nama Barang" />
+                                <Form.Control onChange={(event) => this.setState({ id_barang: event.target.value })} value={this.state.id_barang} as="select">
+                                    <option value={''}>--Pilih Barang --</option>
+                                    {this.state.dataBarang.map((item, index) => (
+                                        <option key={index} value={item.id_barang}>{item.nama_barang}</option>
+                                    ))}
+                                </Form.Control>
                             </Form.Group>
                             <Form.Group >
-                                <Form.Label>Stok</Form.Label>
+                                <Form.Label>QTY Jual</Form.Label>
                                 <Form.Control type="number" placeholder="Stok" />
                             </Form.Group>
                             <Form.Group >
-                                <Form.Label>Harga Pokok</Form.Label>
+                                <Form.Label>Total Jual</Form.Label>
                                 <Form.Control type="number" placeholder="Harga Pokok" />
-                            </Form.Group>
-                            <Form.Group >
-                                <Form.Label>Harga Jual</Form.Label>
-                                <Form.Control type="number" placeholder="Harga Jual" />
                             </Form.Group>
                         </Form>
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button variant="secondary" onClick={this.hideModal}>
-                            Keluar
+                        <Button variant="secondary" onClick={() => this.hapusDataApi(this.state.id_penjualan)}>
+                            Hapus
               </Button>
-                        <Button variant="primary">Tambah data
+                        <Button variant="primary">Edit Data
               </Button>
                     </Modal.Footer>
                 </Modal>

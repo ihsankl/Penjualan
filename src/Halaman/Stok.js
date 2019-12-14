@@ -3,6 +3,8 @@ import { Container, ButtonGroup, Jumbotron, Button, Nav, Navbar, Form, FormContr
 import axios from 'axios';
 import DataTable from 'react-data-table-component';
 import moment from 'moment'
+import supplier from './Supplier'
+import Supplier from './Supplier';
 
 const url = 'http://127.0.0.1:3001'
 
@@ -18,10 +20,11 @@ class Stok extends Component {
 
             id_pembelian: '',
             id_supplier: '',
+            nama_supplier: '',
             id_barang: '',
             tgl_pembelian: '',
             tgl_exp: '',
-            qty: 0,
+            qty_beli: 0,
             total_pembelian: 0,
 
             // END STATE BARANG
@@ -53,7 +56,7 @@ class Stok extends Component {
                 },
                 {
                     name: 'QTY',
-                    selector: 'qty',
+                    selector: 'qty_beli',
                     sortable: true,
                 },
                 {
@@ -64,7 +67,7 @@ class Stok extends Component {
                 {
                     name: 'Opsi',
                     button: true,
-                    cell: row => <div><button onClick={() => this.deleteDataApi(row.id_pembelian, row.id_barang)} style={{ border: '2px solid red', color: 'red', padding: '5px 15px', textAlign: 'center', textDecoration: 'none', display: 'inline-block' }} >Hapus</button> <br></br> <button onClick={() => this.showModalEdit(row.id_pembelian, row.id_supplier, row.id_barang, (moment(row.tgl_pembelian).format('YYYY-MM-DD')), (moment(row.tgl_exp).format('YYYY-MM-DD')), row.qty, row.total_pembelian)} style={{ width: '100%', marginTop: '5px', border: '2px solid blue', color: 'blue', padding: '5px 15px', textAlign: 'center', textDecoration: 'none', display: 'inline-block' }} >Edit</button></div>
+                    cell: row => <div><button onClick={() => this.deleteDataApi(row.id_pembelian, row.id_barang)} style={{ border: '2px solid red', color: 'red', padding: '5px 15px', textAlign: 'center', textDecoration: 'none', display: 'inline-block' }} >Hapus</button> <br></br> <button onClick={() => this.showModalEdit(row.id_pembelian, row.id_supplier, row.id_barang, (moment(row.tgl_pembelian).format('YYYY-MM-DD')), (moment(row.tgl_exp).format('YYYY-MM-DD')), row.qty_beli, row.total_pembelian)} style={{ width: '100%', marginTop: '5px', border: '2px solid blue', color: 'blue', padding: '5px 15px', textAlign: 'center', textDecoration: 'none', display: 'inline-block' }} >Edit</button></div>
                 },
             ]
         }
@@ -99,9 +102,10 @@ class Stok extends Component {
                 dataStok: newData,
                 loading: false
             })
-
+            
         } catch (error) {
             alert(error)
+            console.log(error)
         }
     }
 
@@ -127,7 +131,6 @@ class Stok extends Component {
         } else {
             try {
                 const data = await axios.get(`${url}/pembelian/barang/${id_barang}`)
-
                 if (data.data.length === 0) {
                     this.postDataToApi()
                 } else {
@@ -146,7 +149,7 @@ class Stok extends Component {
                 id_barang: this.state.id_barang,
                 tgl_pembelian: this.state.tgl_pembelian,
                 tgl_exp: this.state.tgl_exp,
-                qty: this.state.qty,
+                qty_beli: this.state.qty_beli,
                 total_pembelian: this.state.total_pembelian,
             })
             this.insertQtyBarang()
@@ -162,17 +165,17 @@ class Stok extends Component {
         const id_barang = this.state.id_barang
         try {
             await axios.put(`${url}/ubahbarang/${id_barang}`, {
-                stok_barang: this.state.qty
+                sisa_stok: this.state.qty_beli
             })
         } catch (error) {
             alert(`kesalahan pada saat input qty: ${error}`)
         }
     }
 
-    hapusQtyBarang = async(id_barang) => {
+    hapusQtyBarang = async (id_barang) => {
         try {
             await axios.put(`${url}/hapusbarang/${id_barang}`, {
-                stok_barang: 0
+                sisa_stok: 0
             })
         } catch (error) {
             alert(`kesalahan pada saat hapus qty: ${error}`)
@@ -180,8 +183,8 @@ class Stok extends Component {
     }
 
     editDataApi = async () => {
-        const { id_pembelian, id_supplier, id_barang, tgl_pembelian, tgl_exp, qty, total_pembelian } = this.state
-        if (this.state.id_supplier === '' || this.state.id_barang === '' || this.state.tgl_pembelian === '' || this.state.tgl_exp === '' || this.state.qty === '' || this.state.total_pembelian === 0) {
+        const { id_pembelian, id_supplier, id_barang, tgl_pembelian, tgl_exp, qty_beli, total_pembelian } = this.state
+        if (this.state.id_supplier === '' || this.state.id_barang === '' || this.state.tgl_pembelian === '' || this.state.tgl_exp === '' || this.state.qty_beli === '' || this.state.total_pembelian === 0) {
             alert('harap di isi')
         } else {
             try {
@@ -190,7 +193,7 @@ class Stok extends Component {
                     id_barang: id_barang,
                     tgl_pembelian: tgl_pembelian,
                     tgl_exp: tgl_exp,
-                    qty: qty,
+                    qty_beli: qty_beli,
                     total_pembelian: total_pembelian,
                 })
                 this.insertQtyBarang()
@@ -226,6 +229,7 @@ class Stok extends Component {
     }
 
     showModalEdit = (id_pembelian, id_supplier, id_barang, tgl_pembelian, tgl_exp, qty, total_pembelian) => {
+        // alert(qty)
         this.setState({ showModalEdit: true })
         this.setState({
             id_pembelian: id_pembelian,
@@ -233,7 +237,7 @@ class Stok extends Component {
             id_barang: id_barang,
             tgl_pembelian: tgl_pembelian,
             tgl_exp: tgl_exp,
-            qty: qty,
+            qty_beli: qty,
             total_pembelian: total_pembelian,
         })
     }
@@ -251,12 +255,9 @@ class Stok extends Component {
                             <Col><h1>Daftar Stok</h1></Col>
                             <Col sm>
                                 <Row>
-                                    <Col style={{ float: 'right' }} sm>
-                                        <Button style={{ marginBottom: 5 }} block onClick={this.showModalTambahSupplier} variant="primary">+ Tambah Supplier</Button>
-                                    </Col>
+                                    <Supplier />
                                     <Col style={{ float: 'right' }} sm>
                                         <Button block onClick={() => this.showModalTambah()} variant="primary">+ Tambah data Stok</Button>
-                                        {/* <Button block onClick={this.showModalTambah} variant="primary">+ Tambah data barang</Button> */}
                                     </Col>
                                 </Row>
                             </Col>
@@ -279,7 +280,7 @@ class Stok extends Component {
                 </Row>
                 <Modal show={this.state.showModalTambah} onHide={this.hideModal}>
                     <Modal.Header closeButton>
-                        <Modal.Title>Tambah Data</Modal.Title>
+                        <Modal.Title>Tambah Data Stok</Modal.Title>
                     </Modal.Header>
                     <Modal.Body>
                         <Form>
@@ -317,7 +318,7 @@ class Stok extends Component {
                             </Row>
                             <Form.Group >
                                 <Form.Label>QTY</Form.Label>
-                                <Form.Control value={this.state.qty} onChange={(event) => this.setState({ qty: event.target.value })} type="number" placeholder="QTY" />
+                                <Form.Control value={this.state.qty_beli} onChange={(event) => this.setState({ qty_beli: event.target.value })} type="number" placeholder="QTY" />
                             </Form.Group>
                             <Form.Group >
                                 <Form.Label>Total Pembelian</Form.Label>
@@ -329,7 +330,7 @@ class Stok extends Component {
                         <Button variant="secondary" onClick={this.hideModal}>
                             Keluar
               </Button>
-                        <Button onClick={() => { this.getSupplyBarangById(); }} variant="primary">Tambah data
+                        <Button onClick={() => this.getSupplyBarangById()} variant="primary">Tambah data
               </Button>
                     </Modal.Footer>
                 </Modal>
@@ -373,7 +374,7 @@ class Stok extends Component {
                             </Row>
                             <Form.Group >
                                 <Form.Label>QTY</Form.Label>
-                                <Form.Control value={this.state.qty} onChange={(event) => this.setState({ qty: event.target.value })} type="number" placeholder="QTY" />
+                                <Form.Control value={this.state.qty_beli} onChange={(event) => this.setState({ qty_beli: event.target.value })} type="number" placeholder="QTY" />
                             </Form.Group>
                             <Form.Group >
                                 <Form.Label>Total Pembelian</Form.Label>

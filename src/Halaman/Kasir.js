@@ -1,18 +1,11 @@
 import React, { Component } from 'react';
-import { Container, Button, Form, Col, Row, Modal, Card, Table, } from 'react-bootstrap';
-import DataTable from 'react-data-table-component';
+import { Container, InputGroup, Button, Form, Col, Row, Modal, Card, Table, } from 'react-bootstrap';
 import moment from 'moment';
 import axios from 'axios';
-// MATERIAL UI
-import TableUI from '@material-ui/core/Table';
-import TableBody from '@material-ui/core/TableBody';
-import TableCell from '@material-ui/core/TableCell';
-import TableHead from '@material-ui/core/TableHead';
-import TableRow from '@material-ui/core/TableRow';
-import Paper from '@material-ui/core/Paper';
+import DataTable from 'react-data-table-component';
+import NumberFormat from 'react-number-format';
 
 const url = 'http://127.0.0.1:3001'
-
 
 class Kasir extends Component {
     constructor(props) {
@@ -76,7 +69,7 @@ class Kasir extends Component {
         const jumlah_jual = this.state.qtyJual
         let hasil = harga_jual * jumlah_jual
 
-        const obj = { 'id_barang': this.state.statIdBarang, 'kode_barang': this.state.statKodeBarang, 'nama_barang': this.state.statNamaBarang, 'harga_jual': this.state.statHargaJual, 'qty_jual': this.state.qtyJual, 'harga_akhir': hasil, 'tgl_jual': this.state.statTanggal }
+        const obj = { 'id_barang': this.state.statIdBarang, 'kode_barang': this.state.statKodeBarang, 'nama_barang': this.state.statNamaBarang, 'harga_jual': this.state.statHargaJual, 'sisa_stok': this.state.statStok, 'qty_jual': Number(this.state.qtyJual), 'harga_akhir': hasil, 'tgl_jual': this.state.statTanggal }
 
         this.setState({
             orders: [...this.state.orders, obj]
@@ -155,7 +148,8 @@ class Kasir extends Component {
             })
             this.alihkan()
         } catch (error) {
-            alert(error)
+            console.log(error)
+            alert('data tidak ditemukan/ server error')
             this.removeStates()
         }
     }
@@ -188,14 +182,14 @@ class Kasir extends Component {
             })
 
         } catch (error) {
-            console.log('data kosong')
+            console.log(error)
+            alert('data tidak ditemukan/ server error')
         }
     }
 
     alihkan = (index) => {
-
-        if (index) {
-            let stok = (this.state.data[index].stok_barang === null) ? 0 : this.state.data[0].stok_barang
+        if (index > 0) {
+            const stok = (this.state.data[index].sisa_stok === undefined) ? 0 : this.state.data[index].sisa_stok
             this.setState({
                 show: false,
                 statStok: stok,
@@ -205,7 +199,7 @@ class Kasir extends Component {
                 statKodeBarang: this.state.data[index].kode_barang,
             })
         } else {
-            let stok = (this.state.data[0].stok_barang === null) ? 0 : this.state.data[0].stok_barang
+            let stok = (this.state.data[0].sisa_stok === undefined) ? 0 : this.state.data[0].sisa_stok
             this.setState({
                 show: false,
                 statStok: stok,
@@ -272,28 +266,39 @@ class Kasir extends Component {
     inputPenjualan = async (index) => {
 
         try {
-            await axios.all([axios.post(`${url}/penjualan`), (axios.put(`${url}/ubahbarang`))], {
-                id_barangPenjualan: this.state.orders[index].id_barang,
-                qty_beliPenjualan: this.state.orders[index].qty_jual,
-                totalPenjualan: this.state.orders[index].harga_akhir,
-                tgl_jualPenjualan: this.state.orders[index].tgl_jual,
-                stok_barang: this.state.orders[index].qty_jual
+            await axios.post(`${url}/penjualan`, {
+                id_barang: this.state.orders[index].id_barang,
+                tgl_penjualan: this.state.orders[index].tgl_jual,
+                qty_beli: this.state.orders[index].qty_jual,
+                total_pembelian: this.state.orders[index].harga_akhir,
+                // sisa_stok: (this.state.statStok) - (this.state.orders[index].qty_jual)
+            })
+            this.kurangiStok(index, this.state.orders[index].id_barang)
+        } catch (error) {
+            console.log(error)
+            alert(`kesalahan ketika input data ke: ${index + 1}`)
+        }
+    }
+
+    kurangiStok = async (index, id_barang) => {
+        try {
+            await axios.put(`${url}/ubahstok/${id_barang}`, {
+                qty_beli: this.state.orders[index].qty_jual
             })
         } catch (error) {
             console.log(error)
             alert(`kesalahan ketika input data ke: ${index + 1}`)
         }
-
-        // console.log(this.state.orders[index].harga_akhir)
+        this.removeOrders()
+        this.removeStates()
+        window.location.reload()
     }
 
     pisahData = () => {
-        this.state.orders.map((index) => (
+        this.state.orders.map((item, index) => (
             this.inputPenjualan(index)
         ))
-        alert('Proses input selesai')
-        this.removeStates()
-        this.removeOrders()
+        alert('Proses input selesai! Jika terjadi error, Cek Console untuk melihat error!')
     }
 
     // UNTUK REFERENSI SIAPA TAU BUTUH
@@ -338,7 +343,8 @@ class Kasir extends Component {
                                             <h2>Tagihan:</h2>
                                         </Col>
                                         <Col sm>
-                                            <h2>Rp. {this.getTotalHarga()}</h2>
+                                            {/* <h2>Rp. {this.getTotalHarga()} </h2> */}
+                                            <h2><NumberFormat value={this.getTotalHarga()} displayType={'text'} thousandSeparator={true} prefix={'Rp. '} /></h2>
                                         </Col>
                                     </Row>
                                 </Card.Body>
@@ -348,7 +354,7 @@ class Kasir extends Component {
                     <Row style={{ marginBottom: 5 }}>
                         <Col xs={6} md={2}>
                             <Form.Label>Kode Barang</Form.Label>
-                            <Form.Control onKeyPress={(event) => (event.key === "Enter") ? this.getDataApiByKode() : ''} style={{ marginBottom: 5 }} value={this.state.statKodeBarang} onChange={(event) => this.setState({ statKodeBarang: event.target.value })} type="text" placeholder="Kode Barang" />
+                            <Form.Control autoFocus="true" onKeyPress={(event) => (event.key === "Enter") ? this.getDataApiByKode() : ''} style={{ marginBottom: 5 }} value={this.state.statKodeBarang} onChange={(event) => this.setState({ statKodeBarang: event.target.value })} type="text" placeholder="Kode Barang" />
                         </Col>
                         <Col xs={6} md={2}>
                             <Form.Label>Nama Barang</Form.Label>
@@ -360,15 +366,19 @@ class Kasir extends Component {
                         </Col>
                         <Col xs={6} md={2}>
                             <Form.Label>Harga Satuan</Form.Label>
-                            <Form.Control value={this.state.statHargaJual} style={{ marginBottom: 5 }} disabled type="text" placeholder="Harga Satuan" />
+                            {/* <Form.Control value={this.state.statHargaJual} style={{ marginBottom: 5 }} disabled thousandSeparator={true} prefix={'Rp. '} type="text" placeholder="Harga Satuan" /> */}
+
+                            <NumberFormat value={this.state.statHargaJual} style={{ marginBottom: 5 }} disabled thousandSeparator={true} prefix={'Rp. '} customInput={Form.Control} />
                         </Col>
                         <Col xs={6} md={2}>
                             <Form.Label>QTY Jual</Form.Label>
-                            <Form.Control onKeyPress={(event) => (event.key === "Enter") ? this.onAddOrder() : ''} value={this.state.qtyJual} onChange={(event) => this.setState({ qtyJual: event.target.value })} style={{ marginBottom: 5 }} type="number" placeholder="Jumlah Jual" />
+                            <Form.Control max={this.state.statStok} min={0} onKeyPress={(event) => (event.key === "Enter") ? this.onAddOrder() : ''} value={this.state.qtyJual} onChange={(event) => this.setState({ qtyJual: event.target.value })} style={{ marginBottom: 5 }} type="number" placeholder="Jumlah Jual" />
                         </Col>
                         <Col xs={6} md={2}>
                             <Form.Label>Harga Akhir</Form.Label>
-                            <Form.Control disabled value={(this.state.qtyJual) * (this.state.statHargaJual)} style={{ marginBottom: 5 }} type="text" placeholder="Harga Akhir" />
+                            {/* <Form.Control disabled value={(this.state.qtyJual) * (this.state.statHargaJual)} style={{ marginBottom: 5 }} type="text" placeholder="Harga Akhir" /> */}
+
+                            <NumberFormat disabled value={(this.state.qtyJual) * (this.state.statHargaJual)} thousandSeparator={true} prefix={'Rp. '} customInput={Form.Control} />
                         </Col>
                     </Row>
                     <Row style={{ marginBottom: 5 }}>
@@ -393,40 +403,12 @@ class Kasir extends Component {
                         <Col sm>
                             <Card>
                                 <Card.Body>
-                                    {/* <DataTable
+                                    <DataTable
                                         title="Barang yang di jual"
                                         columns={this.state.columns}
                                         data={this.state.orders}
                                         pagination
-                                    /> */}
-                                    <Paper >
-                                        <Table aria-label="simple table">
-                                            <TableHead>
-                                                <TableRow>
-                                                    <TableCell>No.</TableCell>
-                                                    <TableCell align="right">Kode Barang</TableCell>
-                                                    <TableCell align="right">Nama Barang</TableCell>
-                                                    <TableCell align="right">Harga Satuan</TableCell>
-                                                    <TableCell align="right">QTY Jual</TableCell>
-                                                    <TableCell align="right">Harga Akhir</TableCell>
-                                                    <TableCell align="right">Harga Akhir</TableCell>
-                                                </TableRow>
-                                            </TableHead>
-                                            <TableBody>
-                                                {this.state.orders.map(row => (
-                                                    <TableRow key={row.name}>
-                                                        <TableCell component="th" scope="row">
-                                                            {row.name}
-                                                        </TableCell>
-                                                        <TableCell align="right">{row.nama_barang}</TableCell>
-                                                        <TableCell align="right">{row.nama_barang}</TableCell>
-                                                        <TableCell align="right">{row.nama_barang}</TableCell>
-                                                        <TableCell align="right">{row.nama_barang}</TableCell>
-                                                    </TableRow>
-                                                ))}
-                                            </TableBody>
-                                        </Table>
-                                    </Paper>
+                                    />
                                 </Card.Body>
                             </Card>
                         </Col>
@@ -438,7 +420,9 @@ class Kasir extends Component {
                                     <Form.Group as={Row}>
                                         <Form.Label column="true" xs={12} md={5}>Sub Total</Form.Label>
                                         <Col column="true" xs={12} md={7}>
-                                            <Form.Control disabled value={this.getSubTotal()} type="number" placeholder="Sub Total" />
+                                            {/* <Form.Control disabled value={this.getSubTotal()} type="number" placeholder="Sub Total" /> */}
+
+                                            <NumberFormat disabled value={this.getSubTotal()} thousandSeparator={true} prefix={'Rp. '} customInput={Form.Control} />
                                         </Col>
                                     </Form.Group>
                                     <Form.Group as={Row}>
@@ -450,7 +434,9 @@ class Kasir extends Component {
                                     <Form.Group as={Row}>
                                         <Form.Label column="true" xs={12} md={5}>Total Harga</Form.Label>
                                         <Col column="true" xs={12} md={7}>
-                                            <Form.Control disabled value={this.getTotalHarga()} type="text" placeholder="Total Harga" />
+                                            {/* <Form.Control disabled value={this.getTotalHarga()} type="text" placeholder="Total Harga" /> */}
+
+                                            <NumberFormat disabled value={this.getTotalHarga()} thousandSeparator={true} prefix={'Rp. '} customInput={Form.Control} />
                                         </Col>
                                     </Form.Group>
                                 </Col>
@@ -458,13 +444,22 @@ class Kasir extends Component {
                                     <Form.Group as={Row}>
                                         <Form.Label column="true" xs={12} md={5}>Bayar</Form.Label>
                                         <Col column="true" xs={12} md={7}>
-                                            <Form.Control value={this.state.statBayar} onChange={(event) => this.setState({ statBayar: event.target.value })} type="number" placeholder="Bayar" />
+                                            <InputGroup>
+                                                <InputGroup.Prepend>
+                                                    <InputGroup.Text id="inputGroupPrepend">Rp.</InputGroup.Text>
+                                                </InputGroup.Prepend>
+                                                <Form.Control value={this.state.statBayar} onChange={(event) => this.setState({ statBayar: event.target.value })} type="number" placeholder="Bayar" />
+                                            </InputGroup>
+
+                                            {/* <NumberFormat value={this.state.statBayar} onChange={(event) => this.setState({ statBayar: event.target.value })} thousandSeparator={true} prefix={'Rp. '} customInput={Form.Control} /> */}
                                         </Col>
                                     </Form.Group>
                                     <Form.Group as={Row}>
                                         <Form.Label column="true" xs={12} md={5}>Kembalian</Form.Label>
                                         <Col column="true" xs={12} md={7}>
-                                            <Form.Control disabled value={(this.state.statBayar) - (this.getTotalHarga())} type="text" placeholder="Kembalian" />
+                                            {/* <Form.Control disabled value={(this.state.statBayar) - (this.getTotalHarga())} type="text" placeholder="Kembalian" /> */}
+
+                                            <NumberFormat disabled value={(this.state.statBayar) - (this.getTotalHarga())} thousandSeparator={true} prefix={'Rp. '} customInput={Form.Control} />
                                         </Col>
                                     </Form.Group>
                                 </Col>
@@ -501,7 +496,7 @@ class Kasir extends Component {
                                         <td>{item.kode_barang}</td>
                                         <td>{item.kategori}</td>
                                         <td>{item.harga_jual}</td>
-                                        <td>{item.stok_barang}</td>
+                                        <td>{item.sisa_stok}</td>
                                         <td style={{ width: 50 }}>
                                             <Button onClick={() => this.alihkan(index)} variant='warning' >Pilih</Button>
                                         </td>
