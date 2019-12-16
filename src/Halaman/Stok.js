@@ -31,6 +31,7 @@ class Stok extends Component {
             dataStok: [],
             dataSupplier: [],
             dataBarang: [],
+            cekStok: 0,
             columns: [
                 {
                     name: 'Supplier',
@@ -76,6 +77,7 @@ class Stok extends Component {
     componentDidMount() {
         this.getDataFromApi()
         this.getSupplierBarang()
+        // this.getBarang()
     }
 
     // getDataFromApi = async () => {
@@ -102,7 +104,7 @@ class Stok extends Component {
                 dataStok: newData,
                 loading: false
             })
-            
+
         } catch (error) {
             alert(error)
             console.log(error)
@@ -220,7 +222,20 @@ class Stok extends Component {
 
     }
 
+    removeStates = () => {
+        this.setState({
+            id_supplier: '',
+            id_barang: '',
+            tgl_pembelian: '',
+            tgl_exp: '',
+            qty_beli: 0,
+            total_pembelian: 0
+        })
+    }
+
     showModalTambah = () => {
+        this.removeStates()
+        this.getSupplierBarang()
         this.setState({ showModalTambah: true })
     }
 
@@ -245,6 +260,23 @@ class Stok extends Component {
     hideModalEdit = () => {
         this.setState({ showModalEdit: false })
     }
+
+    // getBarang = async(id_barang = this.state.id_barang) => {
+    //     try {
+    //         const result = await (axios.get(`${url}/barang/${id_barang}`))
+    //         const newData = result.data[0]
+    //         this.setState({
+    //             cekStok: newData,
+    //         })
+    //         console.log(this.state.cekStok.id_barang)
+    //     } catch (error) {
+    //         console.log(error)
+    //     }
+    // }
+
+    // tara = (id_barang = this.state.id_barang) => {
+    //     return Number(this.state.cekStok) * Number(this.state.qty_beli)
+    // }
 
     render() {
         return (
@@ -295,7 +327,7 @@ class Stok extends Component {
                             </Form.Group>
                             <Form.Group>
                                 <Form.Label>Barang</Form.Label>
-                                <Form.Control onChange={(event) => this.setState({ id_barang: event.target.value })} value={this.state.id_barang} as="select">
+                                <Form.Control onChange={(event) => {this.setState({ id_barang: event.target.value });}} value={this.state.id_barang} as="select">
                                     <option value={''}>--Pilih Barang --</option>
                                     {this.state.dataBarang.map((item, index) => (
                                         <option key={index} value={item.id_barang}>{item.nama_barang}</option>
@@ -318,7 +350,7 @@ class Stok extends Component {
                             </Row>
                             <Form.Group >
                                 <Form.Label>QTY</Form.Label>
-                                <Form.Control value={this.state.qty_beli} onChange={(event) => this.setState({ qty_beli: event.target.value })} type="number" placeholder="QTY" />
+                                <Form.Control value={this.state.qty_beli} onChange={(event) => {this.setState({ qty_beli: event.target.value });}} type="number" placeholder="QTY" />
                             </Form.Group>
                             <Form.Group >
                                 <Form.Label>Total Pembelian</Form.Label>

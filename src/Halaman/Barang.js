@@ -20,6 +20,7 @@ class Barang extends Component {
             kode_barang: '',
             nama_barang: '',
             harga_pokok: 0,
+            harga_distributor: 0,
             harga_jual: 0,
 
             // END STATE BARANG
@@ -41,8 +42,13 @@ class Barang extends Component {
                     sortable: true,
                 },
                 {
-                    name: 'Harga Pokok',
+                    name: 'Harga Dasar',
                     selector: 'harga_pokok',
+                    sortable: true,
+                },
+                {
+                    name: 'Harga Distributor',
+                    selector: 'harga_distributor',
                     sortable: true,
                 },
                 {
@@ -58,7 +64,7 @@ class Barang extends Component {
                 {
                     name: 'Opsi',
                     button: true,
-                    cell: row => <div><button onClick={() => this.deleteDataApi(row.id_barang, row.sisa_stok)} style={{ border: '2px solid red', color: 'red', padding: '5px 15px', textAlign: 'center', textDecoration: 'none', display: 'inline-block' }} >Hapus</button> <br></br> <button onClick={() => this.showModalEdit(row.id_barang, row.kode_barang, row.nama_barang, row.kategori, row.harga_pokok, row.harga_jual)} style={{ width: '100%', marginTop: '5px', border: '2px solid blue', color: 'blue', padding: '5px 15px', textAlign: 'center', textDecoration: 'none', display: 'inline-block' }} >Edit</button></div>
+                    cell: row => <div><button onClick={() => this.deleteDataApi(row.id_barang, row.sisa_stok)} style={{ border: '2px solid red', color: 'red', padding: '5px 15px', textAlign: 'center', textDecoration: 'none', display: 'inline-block' }} >Hapus</button> <br></br> <button onClick={() => this.showModalEdit(row.id_barang, row.kode_barang, row.nama_barang, row.kategori, row.harga_pokok, row.harga_jual, row.harga_distributor)} style={{ width: '100%', marginTop: '5px', border: '2px solid blue', color: 'blue', padding: '5px 15px', textAlign: 'center', textDecoration: 'none', display: 'inline-block' }} >Edit</button></div>
                 },
             ]
         }
@@ -99,7 +105,7 @@ class Barang extends Component {
     }
 
     postDataToApi = async () => {
-        if (this.state.kategori === '' || this.state.kode_barang === '' || this.state.nama_barang === '' || this.state.harga_jual === 0 || this.state.harga_pokok === 0) {
+        if (this.state.kategori === '' || this.state.kode_barang === '' || this.state.nama_barang === '' || this.state.harga_jual === 0 || this.state.harga_pokok === 0 || this.state.harga_distributor === 0) {
             alert('harap di isi')
         } else {
             try {
@@ -108,6 +114,7 @@ class Barang extends Component {
                     kode_barang: this.state.kode_barang,
                     nama_barang: this.state.nama_barang,
                     harga_jual: this.state.harga_jual,
+                    harga_distributor: this.state.harga_distributor,
                     harga_pokok: this.state.harga_pokok
                 })
                 alert('berhasil')
@@ -120,9 +127,9 @@ class Barang extends Component {
     }
 
     editDataApi = async () => {
-        const { id_barang, kategori, kode_barang, nama_barang, harga_pokok, harga_jual } = this.state
-        
-        if (this.state.kategori === '' || this.state.kode_barang === '' || this.state.nama_barang === '' || this.state.harga_jual === 0 || this.state.harga_pokok === 0) {
+        const { id_barang, kategori, kode_barang, nama_barang, harga_pokok, harga_jual, harga_distributor } = this.state
+
+        if (this.state.kategori === '' || this.state.kode_barang === '' || this.state.nama_barang === '' || this.state.harga_jual === 0 || this.state.harga_pokok === 0 || this.state.harga_distributor === 0) {
             alert('harap di isi')
         } else {
             try {
@@ -131,6 +138,7 @@ class Barang extends Component {
                     kode_barang: kode_barang,
                     nama_barang: nama_barang,
                     harga_jual: harga_jual,
+                    harga_distributor: harga_distributor,
                     harga_pokok: harga_pokok
                 })
                 alert('berhasil')
@@ -158,7 +166,19 @@ class Barang extends Component {
         }
     }
 
+    removeStates = () => {
+        this.setState({
+            kategori: '',
+            kode_barang: '',
+            nama_barang: '',
+            harga_jual: 0,
+            harga_distributor: 0,
+            harga_pokok: 0
+        })
+    }
+
     showModalTambah = () => {
+        this.removeStates()
         this.setState({ showModalTambah: true })
     }
 
@@ -166,14 +186,15 @@ class Barang extends Component {
         this.setState({ showModalTambah: false })
     }
 
-    showModalEdit = (id_barang, kode_barang, nama_barang, kategori, harga_pokok, harga_jual) => {
-        this.setState({ showModalEdit: true })
+    showModalEdit = (id_barang, kode_barang, nama_barang, kategori, harga_pokok, harga_jual, harga_distributor) => {
         this.setState({
+            showModalEdit: true,
             id_barang: id_barang,
             kategori: kategori,
             kode_barang: kode_barang,
             nama_barang: nama_barang,
             harga_pokok: harga_pokok,
+            harga_distributor: harga_distributor,
             harga_jual: harga_jual
         })
     }
@@ -253,8 +274,12 @@ class Barang extends Component {
                                 <Form.Control value={this.state.kategori} onChange={(event) => this.setState({ kategori: event.target.value })} type="text" placeholder="Kategori" />
                             </Form.Group>
                             <Form.Group >
-                                <Form.Label>Harga Pokok</Form.Label>
-                                <Form.Control type="number" value={this.state.harga_pokok} onChange={(event) => this.setState({ harga_pokok: event.target.value })} placeholder="Harga Pokok" />
+                                <Form.Label>Harga Dasar</Form.Label>
+                                <Form.Control type="number" value={this.state.harga_pokok} onChange={(event) => this.setState({ harga_pokok: event.target.value })} placeholder="Harga Dasar" />
+                            </Form.Group>
+                            <Form.Group >
+                                <Form.Label>Harga Distributor</Form.Label>
+                                <Form.Control type="number" value={this.state.harga_distributor} onChange={(event) => this.setState({ harga_distributor: event.target.value })} placeholder="Harga Distributor" />
                             </Form.Group>
                             <Form.Group >
                                 <Form.Label>Harga Jual</Form.Label>
@@ -289,8 +314,12 @@ class Barang extends Component {
                                 <Form.Control value={this.state.kategori} onChange={(event) => this.setState({ kategori: event.target.value })} type="text" placeholder="Kategori" />
                             </Form.Group>
                             <Form.Group >
-                                <Form.Label>Harga Pokok</Form.Label>
-                                <Form.Control type="number" value={this.state.harga_pokok} onChange={(event) => this.setState({ harga_pokok: event.target.value })} placeholder="Harga Pokok" />
+                                <Form.Label>Harga Dasar</Form.Label>
+                                <Form.Control type="number" value={this.state.harga_pokok} onChange={(event) => this.setState({ harga_pokok: event.target.value })} placeholder="Harga Dasar" />
+                            </Form.Group>
+                            <Form.Group >
+                                <Form.Label>Harga Distributor</Form.Label>
+                                <Form.Control type="number" value={this.state.harga_distributor} onChange={(event) => this.setState({ harga_distributor: event.target.value })} placeholder="Harga Distributor" />
                             </Form.Group>
                             <Form.Group >
                                 <Form.Label>Harga Jual</Form.Label>
@@ -299,7 +328,7 @@ class Barang extends Component {
                         </Form>
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button variant="secondary" onClick={this.hideModal}>
+                        <Button variant="secondary" onClick={this.hideModalEdit}>
                             Keluar
               </Button>
                         <Button onClick={() => this.editDataApi()} variant="primary">Edit Data

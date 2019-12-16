@@ -221,7 +221,7 @@ class Kasir extends Component {
             Object.keys(find).forEach(key => {
                 if (this.state.statHargaJual === find.harga_jual) {
                     this.setState({
-                        statHargaJual: find.harga_pokok
+                        statHargaJual: find.harga_distributor
                     })
                 } else {
                     this.setState({
@@ -264,7 +264,7 @@ class Kasir extends Component {
     }
 
     inputPenjualan = async (index) => {
-
+        console.log(this.state.orders[index].id_barang)
         try {
             await axios.post(`${url}/penjualan`, {
                 id_barang: this.state.orders[index].id_barang,
