@@ -20,7 +20,7 @@ class Barang extends Component {
             kode_barang: '',
             nama_barang: '',
             harga_pokok: 0,
-            harga_distributor: 0,
+            harga_distributor: '',
             harga_jual: 0,
 
             // END STATE BARANG
@@ -105,7 +105,7 @@ class Barang extends Component {
     }
 
     postDataToApi = async () => {
-        if (this.state.kategori === '' || this.state.kode_barang === '' || this.state.nama_barang === '' || this.state.harga_jual === 0 || this.state.harga_pokok === 0 || this.state.harga_distributor === 0) {
+        if (this.state.kategori === '' || this.state.kode_barang === '' || this.state.nama_barang === '' || this.state.harga_jual === 0 || this.state.harga_pokok === 0 || this.state.harga_distributor === '') {
             alert('harap di isi')
         } else {
             try {
@@ -271,7 +271,7 @@ class Barang extends Component {
                             </Form.Group>
                             <Form.Group >
                                 <Form.Label>Kategori</Form.Label>
-                                <Form.Control value={this.state.kategori} onChange={(event) => this.setState({ kategori: event.target.value })} type="text" placeholder="Kategori" />
+                                <Form.Control name={'kategori'} value={this.state.kategori} onChange={(event) => this.setState({ kategori: event.target.value })} type="text" placeholder="Kategori" />
                             </Form.Group>
                             <Form.Group >
                                 <Form.Label>Harga Dasar</Form.Label>
@@ -311,7 +311,7 @@ class Barang extends Component {
                             </Form.Group>
                             <Form.Group >
                                 <Form.Label>Kategori</Form.Label>
-                                <Form.Control value={this.state.kategori} onChange={(event) => this.setState({ kategori: event.target.value })} type="text" placeholder="Kategori" />
+                                <Form.Control name={'kategori'} value={this.state.kategori} onChange={(event) => this.setState({ kategori: event.target.value })} type="text" placeholder="Kategori" />
                             </Form.Group>
                             <Form.Group >
                                 <Form.Label>Harga Dasar</Form.Label>

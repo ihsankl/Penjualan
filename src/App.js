@@ -24,7 +24,7 @@ class App extends Component {
             <Navbar.Collapse id="basic-navbar-nav">
               <Nav className="mr-auto">
                 <Nav.Link href="/kasir">Kasir</Nav.Link>
-                <Nav.Link href="/laporan">Laporan</Nav.Link>
+                <Nav.Link href="/laporan">Histori</Nav.Link>
                 <Nav.Link href="/barang">Barang</Nav.Link>
                 <Nav.Link href="/stok">Stok</Nav.Link>
               </Nav>
